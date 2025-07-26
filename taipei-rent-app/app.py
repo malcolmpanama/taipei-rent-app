@@ -10,17 +10,6 @@ from pathlib import Path
 # 1 ▸ page setup
 st.set_page_config("Taipei Rent Map", layout="wide", page_icon=":house:")
 
-# 0 ▸ (anywhere near the top, after set_page_config)  –  trim page padding
-st.markdown(
-    """
-    <style>
-    /* tighter left & right margins */
-    .block-container {padding-left: 1rem; padding-right: 1rem;}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
 # 2 ▸ paths
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -151,7 +140,7 @@ fig = px.choropleth_mapbox(
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=750)
 
 # 10 ▸ layout
-col1, col2 = st.columns([1, 5])
+col1, col2 = st.columns([1, 3])
 
 with col1:
     st.title("Taipei District Rent Explorer")
