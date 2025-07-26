@@ -109,9 +109,11 @@ fig = px.choropleth_mapbox(
     },
     color_continuous_scale="YlOrRd",
     mapbox_style="carto-positron",
+    center={"lat": 25.04, "lon": 121.55},
+    zoom=10.5,
     opacity=0.85
 )
-fig.update_layout(mapbox=dict(fitbounds="locations"))
+#fig.update_layout(mapbox=dict(fitbounds="locations"))
 
 # ── 10 ◂  Layout
 col1, col2 = st.columns([1, 3])
