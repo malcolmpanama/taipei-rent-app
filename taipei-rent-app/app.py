@@ -87,8 +87,8 @@ top10_table = (
          )
 )
 
-# 9 ▸ Plotly map - Updated to use choropleth_map and fix bounds
-fig = px.choropleth_map(
+# 9 ▸ Plotly map - Back to choropleth_mapbox with correct bounds
+fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
     locations="TNAME",
@@ -103,16 +103,25 @@ fig = px.choropleth_map(
         "Listings":    True
     },
     color_continuous_scale="YlOrRd",
-    map_style="carto-positron",
+    mapbox_style="carto-positron",
     opacity=0.85
 )
+
+# Calculate bounds from the GeoDataFrame
+bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
+
 fig.update_layout(
+    mapbox=dict(
+        bounds=dict(
+            west=bounds[0],
+            east=bounds[2], 
+            south=bounds[1],
+            north=bounds[3]
+        )
+    ),
     margin=dict(l=0, r=0, t=0, b=0),
     height=600
 )
-
-# Fit bounds to the data
-fig.update_geos(fitbounds="locations")
 
 # 10 ▸ Layout
 col1, col2 = st.columns([1, 3])
