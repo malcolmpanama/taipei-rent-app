@@ -1,5 +1,5 @@
 # app.py — Taipei District Rent Explorer
-# ------------------------------------------------------------
+# ───────────────────────────────────────────────────────────────
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -13,88 +13,17 @@ st.set_page_config("Taipei Rent Map", layout="wide", page_icon=":house:")
 # 2 ▸ paths
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-
 RAW_CSV = DATA_DIR / "taipei_rent_listings.csv"
 GEOJSON = DATA_DIR / "taipei_districts_4326.geojson"
 
 # 3 ▸ load data
 df_raw   = pd.read_csv(RAW_CSV)
 gdf_base = gpd.read_file(GEOJSON)
-
 if "Price_per_ping" not in df_raw.columns:
     df_raw["Price_per_ping"] = df_raw["Price_NT"] / df_raw["Ping"]
 
-# 4 ▸ sidebar filters  –– multi‑select dropdowns *in English*
-with st.sidebar:
-    st.header("Filters")
-
-    # Chinese → English map for the 'type' column
-    type_zh2en = {
-        "電梯大樓": "Elevator Building",
-        "無電梯公寓": "Walk‑up Apartment"
-        # add more if your dataset has them
-    }
-    # and the reverse map for filtering
-    type_en2zh = {en: zh for zh, en in type_zh2en.items()}
-
-    # get Chinese list from the dataframe, then show English
-    type_opts_en = [type_zh2en.get(zh, zh) for zh in
-                    sorted(df_raw["type"].dropna().unique())]
-
-    room_opts = sorted(df_raw["Rooms"].dropna().astype(int).unique())
-
-    sel_types_en = st.multiselect(
-        "Building type (choose one or many)",
-        options=type_opts_en,
-        default=type_opts_en          # pre‑select all
-    )
-
-    sel_rooms = st.multiselect(
-        "Rooms (房) – choose any",
-        options=room_opts,
-        default=room_opts
-    )
-
-    metric = st.radio(
-        "Colour metric",
-        ("Median_Rent", "Median_Rent_per_ping"),
-        format_func=lambda m: {
-            "Median_Rent": "Median NT$ / month",
-            "Median_Rent_per_ping": "Median NT$ / 坪"
-        }[m]
-    )
-
-# 5 ▸ filter listings –– map English back to Chinese
-sel_types_zh = [type_en2zh[en] for en in sel_types_en] if sel_types_en else []
-mask  = df_raw["type"].isin(sel_types_zh) if sel_types_zh else True
-mask &= df_raw["Rooms"].isin(sel_rooms)   if sel_rooms   else True
-df_f  = df_raw[mask]
-
-if df_f.empty:
-    st.error("No listings match the current filters.")
-    st.stop()
-
-
-# 6 ▸ aggregate per district
-agg = (
-    df_f.groupby("District")
-        .agg(
-            Median_Rent=("Price_NT", "median"),
-            Mean_Rent  =("Price_NT", "mean"),
-            P25_Rent   =("Price_NT", lambda s: s.quantile(.25)),
-            P75_Rent   =("Price_NT", lambda s: s.quantile(.75)),
-            Median_Rent_per_ping=("Price_per_ping", "median"),
-            Listings   =("Price_NT", "size")
-        )
-        .round(0)
-        .reset_index()
-)
-
-# 7 ▸ Merge with geometry
-gdf = gdf_base.merge(agg, left_on="TNAME", right_on="District", how="left")
-
-# --- mapping Chinese → English names ---------------------------
-zh2en = {
+# ── mapping Chinese → English for districts
+zh2en_dist = {
     "信義區": "Xinyi District",
     "中正區": "Zhongzheng District",
     "南港區": "Nangang District",
@@ -108,39 +37,99 @@ zh2en = {
     "士林區": "Shilin District",
     "文山區": "Wenshan District"
 }
-gdf["District_EN"] = gdf["District"].map(zh2en)
-# ---------------------------------------------------------------
+gdf_base["District_EN"] = gdf_base["TNAME"].map(zh2en_dist)
 
-# 8 ▸ Top‑10 table (use English names)
+# ── mapping Chinese → English for building type
+type_zh2en = {
+    "電梯大樓": "Elevator Building",
+    "無電梯公寓": "Walk‑up Apartment"
+}
+type_en2zh = {en: zh for zh, en in type_zh2en.items()}
+
+# 4 ▸ sidebar filters (multi‑select dropdowns)
+with st.sidebar:
+    st.header("Filters")
+
+    type_opts_en = [type_zh2en.get(zh, zh)
+                    for zh in sorted(df_raw["type"].dropna().unique())]
+    room_opts    = sorted(df_raw["Rooms"].dropna().astype(int).unique())
+
+    sel_types_en = st.multiselect("Building type", type_opts_en, type_opts_en)
+    sel_rooms    = st.multiselect("Rooms (房)", room_opts, room_opts)
+
+    # user‑friendly metric names
+    metric_labels = {
+        "Median Rent":            "Median_Rent",
+        "Median Rent per 坪":     "Median_Rent_per_ping"
+    }
+    metric_label = st.radio("Colour metric", list(metric_labels.keys()))
+    metric = metric_labels[metric_label]
+
+# 5 ▸ filter listings
+sel_types_zh = [type_en2zh[en] for en in sel_types_en] if sel_types_en else []
+mask  = df_raw["type"].isin(sel_types_zh) if sel_types_zh else True
+mask &= df_raw["Rooms"].isin(sel_rooms)   if sel_rooms   else True
+df_f = df_raw[mask]
+
+if df_f.empty:
+    st.error("No listings match the current filters.")
+    st.stop()
+
+# 6 ▸ aggregate per district
+agg = (
+    df_f.groupby("District")
+        .agg(
+            Median_Rent=("Price_NT", "median"),
+            Mean_Rent=("Price_NT", "mean"),
+            P25_Rent=("Price_NT", lambda s: s.quantile(.25)),
+            P75_Rent=("Price_NT", lambda s: s.quantile(.75)),
+            Median_Rent_per_ping=("Price_per_ping", "median"),
+            Listings=("Price_NT", "size")
+        )
+        .round(0)
+        .reset_index()
+)
+
+# rename columns to nice display names
+agg.rename(columns={
+    "Median_Rent": "Median Rent",
+    "Mean_Rent":   "Mean Rent",
+    "P25_Rent":    "25th Percentile",
+    "P75_Rent":    "75th Percentile",
+    "Median_Rent_per_ping": "Median Rent per 坪"
+}, inplace=True)
+
+# 7 ▸ merge with geometry
+gdf = gdf_base.merge(agg, left_on="TNAME", right_on="District", how="left")
+
+# 8 ▸ top‑10 table
 top10_table = (
-    agg.assign(District_EN=agg["District"].map(zh2en))
-       .sort_values(metric, ascending=False)
-       .loc[:, ["District_EN", metric]]
+    agg.assign(District=agg["District"].map(zh2en_dist))
+       .sort_values(metric_label, ascending=False)
+       .loc[:, ["District", metric_label]]
        .head(10)
        .reset_index(drop=True)
        .style
        .hide(axis="index")
-       .format({metric: "{:,.0f}"})
-       .set_table_styles(
-           [{"selector": "tbody tr:nth-child(even)",
-             "props": [("background-color", "#f5f5f5")]}]
-       )
+       .format({metric_label: "{:,.0f}"})
 )
 
-# 9 ▸ Plotly map — fixed framing
+# 9 ▸ plotly map (fixed zoom)
 fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
-    locations="TNAME",                     # geometry key
+    locations="TNAME",
     featureidkey="properties.TNAME",
-    color=metric,
-    hover_name="District_EN",              # English on hover
+    color=metric_label,
+    hover_name="District_EN",
     hover_data={
-        "Median_Rent": ":,.0f NT$",
-        "Mean_Rent":   ":,.0f NT$",
-        "P25_Rent":    ":,.0f NT$",
-        "P75_Rent":    ":,.0f NT$",
-        "Listings":    True
+        "Chinese Name": gdf["TNAME"],
+        "Median Rent": ":,.0f NT$",
+        "Mean Rent": ":,.0f NT$",
+        "25th Percentile": ":,.0f NT$",
+        "75th Percentile": ":,.0f NT$",
+        "Listings": True,
+        "TNAME": False           # hide raw key
     },
     color_continuous_scale="YlOrRd",
     mapbox_style="carto-positron",
