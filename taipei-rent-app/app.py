@@ -87,7 +87,7 @@ top10_table = (
          )
 )
 
-# 9 ▸ Plotly map - Back to choropleth_mapbox with correct bounds
+# 9 ▸ Plotly map — fixed centre/zoom (no dynamic bounds)
 fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
@@ -104,27 +104,18 @@ fig = px.choropleth_mapbox(
     },
     color_continuous_scale="YlOrRd",
     mapbox_style="carto-positron",
+    # ------------- fixed framing ------------------------
+    center={"lat": 25.04, "lon": 121.55},   # centre of Taipei City
+    zoom=10.3,                              # sweet‑spot zoom for full city
+    # ----------------------------------------------------
     opacity=0.85
 )
 
-# Calculate bounds from the GeoDataFrame with 4x padding
-bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
-padding_horizontal = 0.05  # Horizontal padding
-padding_vertical = 0.8     # 4 times the previous padding (0.2 * 4)
-
 fig.update_layout(
-    mapbox=dict(
-        bounds=dict(
-            west=bounds[0] - padding_horizontal,
-            east=bounds[2] + padding_horizontal, 
-            south=bounds[1] - padding_vertical,
-            north=bounds[3] + padding_vertical
-        ),
-        zoom=9  # Set zoom level (lower = more zoomed out)
-    ),
     margin=dict(l=0, r=0, t=0, b=0),
-    height=800  # Keep the increased height
+    height=750                              # tall enough for good aspect
 )
+
 
 # 10 ▸ Layout
 col1, col2 = st.columns([1, 3])
