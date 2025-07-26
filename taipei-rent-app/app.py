@@ -157,23 +157,29 @@ col1, col2 = st.columns([1, 1])
 with col1:
     st.title("Taipei District Rent Explorer")
     st.markdown(
-    """
+        """
     **How this works**
 
-    * Select one or many **building types** (elevator vs. walk‑up)  
-      and **room counts** in the sidebar.  
-    * The map colors each Taipei district by the metric you pick
-      (default: **Median Rent**).  
-    * Hover over a district to see detailed stats.
-    
+    * Select one or more **building types** (elevator vs. walk-up)  
+      and **room counts** from the sidebar.  
+    * The map colors each Taipei district based on your selected metric  
+      (default: **Median Rent per 坪**).  
+    * Hover over a district for detailed rent stats.
+
     **Glossary**
 
     | Term | Meaning |
     |------|---------|
     | **Median Rent** | Middle monthly rent of all filtered listings. |
-    | **Mean Rent** | Simple average of rents. |
-    | **25th / 75th Percentile** | One‑quarter of listings are below / above these values. |
-    | **Median Rent per 坪** | Median rent divided by interior area in 坪 (1 坪 ≈ 3.3 m²). |
+    | **Mean Rent** | Average rent across listings. |
+    | **25th / 75th Percentile** | Ranges covering the cheaper and pricier ends of the market. |
+    | **Median Rent per 坪** | Median rent divided by interior area (1 坪 ≈ 3.3 m²). |
+
+    ---
+
+    💡 **Moving to Taipei?**  
+    Want a deeper, no-fluff breakdown on where to live — including vibes, commute times, rent ranges, and local tips?  
+    👉 [Click here to check out the full Taipei Neighborhood Guide](https://malcolmproducts.gumroad.com/l/kambt)
     """,
     unsafe_allow_html=True
 )
