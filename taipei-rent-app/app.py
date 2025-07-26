@@ -24,15 +24,15 @@ gdf_base = gpd.read_file(GEOJSON)
 if "Price_per_ping" not in df_raw.columns:
     df_raw["Price_per_ping"] = df_raw["Price_NT"] / df_raw["Ping"]
 
-# 4 ▸ sidebar filters
+# 4 ▸ sidebar filters  ──>  NOW DROPDOWNS
 with st.sidebar:
     st.header("Filters")
 
-    type_opts = sorted(df_raw["type"].dropna().unique())
-    room_opts = sorted(df_raw["Rooms"].dropna().astype(int).unique())
+    type_opts  = sorted(df_raw["type"].dropna().unique())
+    room_opts  = sorted(df_raw["Rooms"].dropna().astype(int).unique())
 
-    sel_types = st.multiselect("Building type", type_opts, type_opts)
-    sel_rooms = st.multiselect("Rooms (房)", room_opts, room_opts)
+    sel_type  = st.selectbox("Building type", type_opts)      # dropdown
+    sel_room  = st.selectbox("Rooms (房)", room_opts)         # dropdown
 
     metric = st.radio(
         "Colour metric",
@@ -43,8 +43,8 @@ with st.sidebar:
         }[m]
     )
 
-# 5 ▸ filter listings
-mask = df_raw["type"].isin(sel_types) & df_raw["Rooms"].isin(sel_rooms)
+# 5 ▸ filter listings  ──>  adjust mask for single values
+mask = (df_raw["type"] == sel_type) & (df_raw["Rooms"] == sel_room)
 df_f = df_raw[mask]
 
 if df_f.empty:
