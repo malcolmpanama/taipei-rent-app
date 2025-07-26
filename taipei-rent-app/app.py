@@ -110,7 +110,7 @@ fig = px.choropleth_mapbox(
 # Calculate bounds from the GeoDataFrame with 4x padding
 bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
 padding_horizontal = 0.05  # Horizontal padding
-padding_vertical = 0.85     # 4 times the previous padding (0.2 * 4)
+padding_vertical = 0.8     # 4 times the previous padding (0.2 * 4)
 
 fig.update_layout(
     mapbox=dict(
@@ -119,7 +119,8 @@ fig.update_layout(
             east=bounds[2] + padding_horizontal, 
             south=bounds[1] - padding_vertical,
             north=bounds[3] + padding_vertical
-        )
+        ),
+        zoom=9  # Set zoom level (lower = more zoomed out)
     ),
     margin=dict(l=0, r=0, t=0, b=0),
     height=800  # Keep the increased height
