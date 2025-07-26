@@ -114,7 +114,7 @@ top10_table = (
        .format({metric_label: "{:,.0f}"})
 )
 
-# 9 ▸ Plotly map — tight bounds (2 % pad)
+# 9 ▸ plotly map (fixed zoom)
 fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
@@ -125,33 +125,17 @@ fig = px.choropleth_mapbox(
     hover_data={
         "Chinese Name": gdf["TNAME"],
         "Median Rent": ":,.0f NT$",
-        "Mean Rent":   ":,.0f NT$",
+        "Mean Rent": ":,.0f NT$",
         "25th Percentile": ":,.0f NT$",
         "75th Percentile": ":,.0f NT$",
         "Listings": True,
-        "TNAME": False
+        "TNAME": False           # hide raw key
     },
     color_continuous_scale="YlOrRd",
     mapbox_style="carto-positron",
+    center={"lat": 25.04, "lon": 121.55},
+    zoom=10.3,
     opacity=0.85
-)
-
-# --- crop west/east/south/north to city extent -------------
-minx, miny, maxx, maxy = gdf.total_bounds
-pad_x = (maxx - minx) * 0.02      # 2 % horizontal pad
-pad_y = (maxy - miny) * 0.02      # 2 % vertical pad
-
-fig.update_layout(
-    mapbox=dict(
-        bounds=dict(
-            west=minx - pad_x,
-            east=maxx + pad_x,
-            south=miny - pad_y,
-            north=maxy + pad_y
-        )
-    ),
-    margin=dict(l=0, r=0, t=0, b=0),
-    height=750
 )
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=750)
 
