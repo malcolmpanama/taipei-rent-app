@@ -10,6 +10,18 @@ from pathlib import Path
 # 1 ▸ page setup
 st.set_page_config("Taipei Rent Map", layout="wide", page_icon=":house:")
 
+st.markdown(
+    """
+    <style>
+    /* shrink any table inside the left column to its intrinsic width */
+    .block-container .element-container:has(.dataframe)           {width: fit-content;}
+    .block-container .element-container:has(.dataframe) > div     {width: fit-content;}
+    .block-container .element-container:has(.dataframe)           {margin: 0 auto;}
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # 2 ▸ paths
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
