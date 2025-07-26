@@ -140,7 +140,7 @@ fig = px.choropleth_mapbox(
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=750)
 
 # 10 ▸ layout
-col1, col2 = st.columns([1, 2])
+col1, col2 = st.columns([1, 1])
 
 with col1:
     st.title("Taipei District Rent Explorer")
