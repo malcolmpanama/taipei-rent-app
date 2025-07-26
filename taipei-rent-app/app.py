@@ -1,5 +1,5 @@
 # app.py — Taipei District Rent Explorer
-# ───────────────────────────────────────────────────────────────
+# ------------------------------------------------------------
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -7,24 +7,24 @@ import plotly.express as px
 import json
 from pathlib import Path
 
-# 1 ▸ Page setup
+# 1 ▸ page setup
 st.set_page_config("Taipei Rent Map", layout="wide", page_icon=":house:")
 
-# 2 ▸ Data paths
+# 2 ▸ paths
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 
 RAW_CSV = DATA_DIR / "taipei_rent_listings.csv"
 GEOJSON = DATA_DIR / "taipei_districts_4326.geojson"
 
-# 3 ▸ Load data
+# 3 ▸ load data
 df_raw   = pd.read_csv(RAW_CSV)
 gdf_base = gpd.read_file(GEOJSON)
 
 if "Price_per_ping" not in df_raw.columns:
     df_raw["Price_per_ping"] = df_raw["Price_NT"] / df_raw["Ping"]
 
-# 4 ▸ Sidebar filters
+# 4 ▸ sidebar filters
 with st.sidebar:
     st.header("Filters")
 
@@ -43,7 +43,7 @@ with st.sidebar:
         }[m]
     )
 
-# 5 ▸ Filter listings
+# 5 ▸ filter listings
 mask = df_raw["type"].isin(sel_types) & df_raw["Rooms"].isin(sel_rooms)
 df_f = df_raw[mask]
 
@@ -51,7 +51,7 @@ if df_f.empty:
     st.error("No listings match the current filters.")
     st.stop()
 
-# 6 ▸ Aggregate per district
+# 6 ▸ aggregate per district
 agg = (
     df_f.groupby("District")
         .agg(
@@ -69,32 +69,46 @@ agg = (
 # 7 ▸ Merge with geometry
 gdf = gdf_base.merge(agg, left_on="TNAME", right_on="District", how="left")
 
-# 8 ▸ Top‑10 table
-top10 = (
-    agg.sort_values(metric, ascending=False)
-       .loc[:, ["District", metric]]
+# --- mapping Chinese → English names ---------------------------
+zh2en = {
+    "信義區": "Xinyi District",
+    "中正區": "Zhongzheng District",
+    "南港區": "Nangang District",
+    "大安區": "Da'an District",
+    "大同區": "Datong District",
+    "中山區": "Zhongshan District",
+    "松山區": "Songshan District",
+    "內湖區": "Neihu District",
+    "士林區": "Shilin District",
+    "文山區": "Wenshan District"
+}
+gdf["District_EN"] = gdf["District"].map(zh2en)
+# ---------------------------------------------------------------
+
+# 8 ▸ Top‑10 table (use English names)
+top10_table = (
+    agg.assign(District_EN=agg["District"].map(zh2en))
+       .sort_values(metric, ascending=False)
+       .loc[:, ["District_EN", metric]]
        .head(10)
        .reset_index(drop=True)
+       .style
+       .hide(axis="index")
+       .format({metric: "{:,.0f}"})
+       .set_table_styles(
+           [{"selector": "tbody tr:nth-child(even)",
+             "props": [("background-color", "#f5f5f5")]}]
+       )
 )
 
-top10_table = (
-    top10.style
-         .hide(axis="index")
-         .format({metric: "{:,.0f}"})
-         .set_table_styles(
-             [{"selector": "tbody tr:nth-child(even)",
-               "props": [("background-color", "#f5f5f5")]}]
-         )
-)
-
-# 9 ▸ Plotly map — fixed centre/zoom (no dynamic bounds)
+# 9 ▸ Plotly map — fixed framing
 fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
-    locations="TNAME",
+    locations="TNAME",                     # geometry key
     featureidkey="properties.TNAME",
     color=metric,
-    hover_name="TNAME",
+    hover_name="District_EN",              # English on hover
     hover_data={
         "Median_Rent": ":,.0f NT$",
         "Mean_Rent":   ":,.0f NT$",
@@ -104,27 +118,20 @@ fig = px.choropleth_mapbox(
     },
     color_continuous_scale="YlOrRd",
     mapbox_style="carto-positron",
-    # ------------- fixed framing ------------------------
-    center={"lat": 25.04, "lon": 121.55},   # centre of Taipei City
-    zoom=10.3,                              # sweet‑spot zoom for full city
-    # ----------------------------------------------------
+    center={"lat": 25.04, "lon": 121.55},
+    zoom=10.3,
     opacity=0.85
 )
+fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=750)
 
-fig.update_layout(
-    margin=dict(l=0, r=0, t=0, b=0),
-    height=750                              # tall enough for good aspect
-)
-
-
-# 10 ▸ Layout
+# 10 ▸ layout
 col1, col2 = st.columns([1, 3])
 
 with col1:
     st.title("Taipei District Rent Explorer")
     st.markdown("Filter by **building type** and **room count** to see current medians.")
-    st.subheader("Top 10 (current view)")
-    st.write(top10_table)        # ← only one table now
+    st.subheader("Top 10 (current view)")
+    st.write(top10_table)
     st.markdown("---")
     st.markdown(
         """
@@ -136,12 +143,3 @@ with col1:
 
 with col2:
     st.plotly_chart(fig, use_container_width=True)
-
-# 11 ▸ Download button
-csv_bytes = df_f.to_csv(index=False).encode("utf-8-sig")
-st.download_button(
-    "Download filtered listings",
-    csv_bytes,
-    file_name="taipei_rent_filtered_listings.csv",
-    mime="text/csv"
-)
