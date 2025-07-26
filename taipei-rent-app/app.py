@@ -70,12 +70,26 @@ agg = (
 # ── 7  ◂  Merge with geometry
 gdf = gdf_base.merge(agg, left_on="TNAME", right_on="District", how="left")
 
-# ── 8  ◂  Top‑10 table
+# ── 8  ◂  Top‑10 table (districts)
+if metric not in agg.columns:
+    st.warning(f"Metric '{metric}' is missing. Falling back to Median_Rent.")
+    metric = "Median_Rent"
+
 top10 = (
     agg.sort_values(metric, ascending=False)
        .loc[:, ["District", metric]]
        .head(10)
        .reset_index(drop=True)
+)
+
+st.write(
+    top10.style                    # use Styler for nice formatting
+         .hide(axis="index")       # no 0,1,2… column
+         .format({metric: "{:,.0f}"})
+         .set_table_styles(        # optional: add subtle stripe
+             [{"selector": "tbody tr:nth-child(even)",
+               "props": [("background-color", "#f5f5f5")]}]
+         )
 )
 
 # ── 9  ◂  Plotly map
@@ -95,11 +109,9 @@ fig = px.choropleth_mapbox(
     },
     color_continuous_scale="YlOrRd",
     mapbox_style="carto-positron",
-    center={"lat": 25.04, "lon": 121.55},
-    zoom=9,
     opacity=0.85
 )
-fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
+fig.update_layout(mapbox=dict(fitbounds="locations"))
 
 # ── 10 ◂  Layout
 col1, col2 = st.columns([1, 3])
@@ -112,8 +124,8 @@ with col1:
     st.markdown("---")
     st.markdown(
         """
-        📺 **[My YouTube Channel](https://youtube.com/@YourChannel)**  
-        💾 **[Get full toolkit on Gumroad](https://gumroad.com/l/taipei-rent-pack)**
+        📺 **[My YouTube Channel](https://www.youtube.com/@malcolmtalks)**  
+        💾 **[Taipei Neighborhood & Apartment Guide](https://malcolmproducts.gumroad.com/l/kambt)**
         """,
         unsafe_allow_html=True
     )
