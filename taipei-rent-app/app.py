@@ -181,18 +181,18 @@ with col1:
     Want a deeper, no-fluff breakdown on where to live — including vibes, commute times, rent ranges, and local tips?  
     👉 [Click here](https://malcolmproducts.gumroad.com/l/kambt)
     """,
-    unsafe_allow_html=True
-)
+        unsafe_allow_html=True
+    )
     st.subheader("Top 10 (current view)")
     st.write(top10_table)
     st.markdown("---")
-    st.markdown(
-        """
-        📺 **[My YouTube Channel](https://www.youtube.com/@malcolmtalks)**  
-        💾 **[Taipei Neighborhood & Apartment Guide](https://malcolmproducts.gumroad.com/l/kambt)**
-        """,
-        unsafe_allow_html=True
-    )
 
 with col2:
     st.plotly_chart(fig, use_container_width=True)
+    st.markdown("---")
+    st.markdown(
+        """
+        📺 **[Made by](https://www.youtube.com/@malcolmtalks)**  
+        """,
+        unsafe_allow_html=True
+    )
