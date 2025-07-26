@@ -109,8 +109,8 @@ fig = px.choropleth_mapbox(
 
 # Calculate bounds from the GeoDataFrame with much more padding
 bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
-padding_horizontal = 0.05  # More horizontal padding
-padding_vertical = 0.08    # Much more vertical padding
+padding_horizontal = 0.05  # Horizontal padding
+padding_vertical = 0.15    # Much much more vertical padding
 
 fig.update_layout(
     mapbox=dict(
