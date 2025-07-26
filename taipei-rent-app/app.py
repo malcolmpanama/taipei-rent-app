@@ -179,7 +179,7 @@ with col1:
 
     💡 **Moving to Taipei?**  
     Want a deeper, no-fluff breakdown on where to live — including vibes, commute times, rent ranges, and local tips?  
-    👉 [Click here to check out the full Taipei Neighborhood Guide](https://malcolmproducts.gumroad.com/l/kambt)
+    👉 [Click here](https://malcolmproducts.gumroad.com/l/kambt)
     """,
     unsafe_allow_html=True
 )
