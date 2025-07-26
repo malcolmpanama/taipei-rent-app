@@ -47,7 +47,7 @@ with st.sidebar:
 mask = df_raw["type"].isin(sel_types) & df_raw["Rooms"].isin(sel_rooms)
 df_f = df_raw[mask]
 
-if df_f.empty():
+if df_f.empty:
     st.error("No listings match the current filters.")
     st.stop()
 
