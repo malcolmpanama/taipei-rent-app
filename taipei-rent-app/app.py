@@ -123,7 +123,22 @@ top10_table = (
     .format({metric_label: "{:,.0f}"})
 )
 
-# 9 ▸ plotly map (Viridis + white borders + tight bounds)
+# 9 ▸ Plotly map — Viridis, white borders, safe hover
+
+# make sure the metric column exists after renaming
+assert metric_label in gdf.columns, f"{metric_label} column not found in GeoDataFrame"
+
+# clean hover dictionary (only Series / numbers / bools)
+hover_dict = {
+    "Chinese Name": gdf["TNAME"],
+    "Rooms": gdf["Rooms"].astype(int),
+    "Median Rent": gdf["Median Rent"],
+    "Mean Rent": gdf["Mean Rent"],
+    "25th Percentile": gdf["25th Percentile"],
+    "75th Percentile": gdf["75th Percentile"],
+    "Listings": gdf["Listings"],
+}
+
 fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
@@ -131,22 +146,14 @@ fig = px.choropleth_mapbox(
     featureidkey="properties.TNAME",
     color=metric_label,
     hover_name="District_EN",
-    hover_data={
-        "Chinese Name": gdf["TNAME"],
-        "Rooms": gdf["Rooms_sel"],
-        "Median Rent": ":,.0f NT$",
-        "Mean Rent": ":,.0f NT$",
-        "25th Percentile": ":,.0f NT$",
-        "75th Percentile": ":,.0f NT$",
-        "Listings": True,
-        "TNAME": False,
-    },
+    hover_data=hover_dict,
     color_continuous_scale="Viridis",
     mapbox_style="carto-positron",
     line_color="white",
     line_width=0.5,
     opacity=0.85,
 )
+
 
 minx, miny, maxx, maxy = gdf.total_bounds
 pad_x = (maxx - minx) * 0.02
