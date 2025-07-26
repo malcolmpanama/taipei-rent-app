@@ -24,23 +24,35 @@ gdf_base = gpd.read_file(GEOJSON)
 if "Price_per_ping" not in df_raw.columns:
     df_raw["Price_per_ping"] = df_raw["Price_NT"] / df_raw["Ping"]
 
-# 4 ▸ sidebar filters  –– multi‑select dropdowns
+# 4 ▸ sidebar filters  –– multi‑select dropdowns *in English*
 with st.sidebar:
     st.header("Filters")
 
-    type_opts = sorted(df_raw["type"].dropna().unique())
+    # Chinese → English map for the 'type' column
+    type_zh2en = {
+        "電梯大樓": "Elevator Building",
+        "無電梯公寓": "Walk‑up Apartment"
+        # add more if your dataset has them
+    }
+    # and the reverse map for filtering
+    type_en2zh = {en: zh for zh, en in type_zh2en.items()}
+
+    # get Chinese list from the dataframe, then show English
+    type_opts_en = [type_zh2en.get(zh, zh) for zh in
+                    sorted(df_raw["type"].dropna().unique())]
+
     room_opts = sorted(df_raw["Rooms"].dropna().astype(int).unique())
 
-    sel_types = st.multiselect(
+    sel_types_en = st.multiselect(
         "Building type (choose one or many)",
-        options=type_opts,
-        default=type_opts       # pre‑select all
+        options=type_opts_en,
+        default=type_opts_en          # pre‑select all
     )
 
     sel_rooms = st.multiselect(
         "Rooms (房) – choose any",
         options=room_opts,
-        default=room_opts       # pre‑select all
+        default=room_opts
     )
 
     metric = st.radio(
@@ -52,9 +64,10 @@ with st.sidebar:
         }[m]
     )
 
-# 5 ▸ filter listings –– respect “all” when list is empty
-mask  = df_raw["type"].isin(sel_types) if sel_types else True
-mask &= df_raw["Rooms"].isin(sel_rooms) if sel_rooms else True
+# 5 ▸ filter listings –– map English back to Chinese
+sel_types_zh = [type_en2zh[en] for en in sel_types_en] if sel_types_en else []
+mask  = df_raw["type"].isin(sel_types_zh) if sel_types_zh else True
+mask &= df_raw["Rooms"].isin(sel_rooms)   if sel_rooms   else True
 df_f  = df_raw[mask]
 
 if df_f.empty:
