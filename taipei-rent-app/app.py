@@ -1,5 +1,5 @@
 # app.py — Taipei District Rent Explorer
-# ───────────────────────────────────────────────────────────────
+# ------------------------------------------------------------
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -7,24 +7,24 @@ import plotly.express as px
 import json
 from pathlib import Path
 
-# 1 ▸ Page setup
+# 1 ▸ page setup
 st.set_page_config("Taipei Rent Map", layout="wide", page_icon=":house:")
 
-# 2 ▸ Data paths
+# 2 ▸ paths
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 
 RAW_CSV = DATA_DIR / "taipei_rent_listings.csv"
 GEOJSON = DATA_DIR / "taipei_districts_4326.geojson"
 
-# 3 ▸ Load data
+# 3 ▸ load data
 df_raw   = pd.read_csv(RAW_CSV)
 gdf_base = gpd.read_file(GEOJSON)
 
 if "Price_per_ping" not in df_raw.columns:
     df_raw["Price_per_ping"] = df_raw["Price_NT"] / df_raw["Ping"]
 
-# 4 ▸ Sidebar filters
+# 4 ▸ sidebar filters
 with st.sidebar:
     st.header("Filters")
 
@@ -43,7 +43,7 @@ with st.sidebar:
         }[m]
     )
 
-# 5 ▸ Filter listings
+# 5 ▸ filter listings
 mask = df_raw["type"].isin(sel_types) & df_raw["Rooms"].isin(sel_rooms)
 df_f = df_raw[mask]
 
@@ -51,7 +51,7 @@ if df_f.empty:
     st.error("No listings match the current filters.")
     st.stop()
 
-# 6 ▸ Aggregate per district
+# 6 ▸ aggregate per district
 agg = (
     df_f.groupby("District")
         .agg(
@@ -66,28 +66,25 @@ agg = (
         .reset_index()
 )
 
-# 7 ▸ Merge with geometry
+# 7 ▸ merge with geometry
 gdf = gdf_base.merge(agg, left_on="TNAME", right_on="District", how="left")
 
 # 8 ▸ Top‑10 table
-top10 = (
+top10_table = (
     agg.sort_values(metric, ascending=False)
        .loc[:, ["District", metric]]
        .head(10)
        .reset_index(drop=True)
+       .style
+       .hide(axis="index")
+       .format({metric: "{:,.0f}"})
+       .set_table_styles(
+           [{"selector": "tbody tr:nth-child(even)",
+             "props": [("background-color", "#f5f5f5")]}]
+       )
 )
 
-top10_table = (
-    top10.style
-         .hide(axis="index")
-         .format({metric: "{:,.0f}"})
-         .set_table_styles(
-             [{"selector": "tbody tr:nth-child(even)",
-               "props": [("background-color", "#f5f5f5")]}]
-         )
-)
-
-# 9 ▸ Plotly map - Back to choropleth_mapbox with correct bounds
+# 9 ▸ Plotly map
 fig = px.choropleth_mapbox(
     gdf,
     geojson=json.loads(gdf.to_json()),
@@ -107,32 +104,32 @@ fig = px.choropleth_mapbox(
     opacity=0.85
 )
 
-# Calculate bounds from the GeoDataFrame with extreme padding
-bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
-padding_horizontal = 0.05  # Horizontal padding
-padding_vertical = 0.8     # Extreme vertical padding
+# --- ratio‑based padding so the whole city shows
+minx, miny, maxx, maxy = gdf.total_bounds
+pad_x = (maxx - minx) * 0.15   # 15 % horizontal padding
+pad_y = (maxy - miny) * 0.15   # 15 % vertical padding
 
 fig.update_layout(
     mapbox=dict(
         bounds=dict(
-            west=bounds[0] - padding_horizontal,
-            east=bounds[2] + padding_horizontal, 
-            south=bounds[1] - padding_vertical,
-            north=bounds[3] + padding_vertical
+            west=minx - pad_x,
+            east=maxx + pad_x,
+            south=miny - pad_y,
+            north=maxy + pad_y
         )
     ),
     margin=dict(l=0, r=0, t=0, b=0),
-    height=800  # Also increased height even more
+    height=750
 )
 
-# 10 ▸ Layout
+# 10 ▸ layout
 col1, col2 = st.columns([1, 3])
 
 with col1:
     st.title("Taipei District Rent Explorer")
     st.markdown("Filter by **building type** and **room count** to see current medians.")
-    st.subheader("Top 10 (current view)")
-    st.write(top10_table)        # ← only one table now
+    st.subheader("Top 10 (current view)")
+    st.write(top10_table)
     st.markdown("---")
     st.markdown(
         """
@@ -145,7 +142,7 @@ with col1:
 with col2:
     st.plotly_chart(fig, use_container_width=True)
 
-# 11 ▸ Download button
+# 11 ▸ download button
 csv_bytes = df_f.to_csv(index=False).encode("utf-8-sig")
 st.download_button(
     "Download filtered listings",
