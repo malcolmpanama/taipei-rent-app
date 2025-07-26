@@ -79,6 +79,8 @@ zh2en = {
     "中山區": "Zhongshan District",
     "松山區": "Songshan District",
     "內湖區": "Neihu District",
+    "萬華區": "Wanhua District",
+    "北投區": "Beitou District",
     "士林區": "Shilin District",
     "文山區": "Wenshan District"
 }
