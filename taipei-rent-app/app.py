@@ -107,10 +107,10 @@ fig = px.choropleth_mapbox(
     opacity=0.85
 )
 
-# Calculate bounds from the GeoDataFrame with much more padding
+# Calculate bounds from the GeoDataFrame with extreme padding
 bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
 padding_horizontal = 0.05  # Horizontal padding
-padding_vertical = 0.45    # Triple the vertical padding
+padding_vertical = 0.8     # Extreme vertical padding
 
 fig.update_layout(
     mapbox=dict(
@@ -122,7 +122,7 @@ fig.update_layout(
         )
     ),
     margin=dict(l=0, r=0, t=0, b=0),
-    height=700  # Keep the increased height
+    height=800  # Also increased height even more
 )
 
 # 10 ▸ Layout
