@@ -87,8 +87,8 @@ top10_table = (
          )
 )
 
-# 9 ▸ Plotly map
-fig = px.choropleth_mapbox(
+# 9 ▸ Plotly map - Updated to use choropleth_map and fix bounds
+fig = px.choropleth_map(
     gdf,
     geojson=json.loads(gdf.to_json()),
     locations="TNAME",
@@ -103,14 +103,16 @@ fig = px.choropleth_mapbox(
         "Listings":    True
     },
     color_continuous_scale="YlOrRd",
-    mapbox_style="carto-positron",
+    map_style="carto-positron",
     opacity=0.85
 )
 fig.update_layout(
-    mapbox=dict(fitbounds="locations"),
     margin=dict(l=0, r=0, t=0, b=0),
     height=600
 )
+
+# Fit bounds to the data
+fig.update_geos(fitbounds="locations")
 
 # 10 ▸ Layout
 col1, col2 = st.columns([1, 3])
@@ -118,7 +120,7 @@ col1, col2 = st.columns([1, 3])
 with col1:
     st.title("Taipei District Rent Explorer")
     st.markdown("Filter by **building type** and **room count** to see current medians.")
-    st.subheader("Top 10 (current view)")
+    st.subheader("Top 10 (current view)")
     st.write(top10_table)        # ← only one table now
     st.markdown("---")
     st.markdown(
