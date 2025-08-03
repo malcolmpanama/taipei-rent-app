@@ -193,6 +193,7 @@ with col2:
     st.markdown(
         """
         📺 **[Made by](https://www.youtube.com/@malcolmtalks)**  
+        ☕️ **[Support this project](https://buymeacoffee.com/malcolmlegy)**
         """,
         unsafe_allow_html=True
     )
