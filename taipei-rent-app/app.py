@@ -6,9 +6,18 @@ import geopandas as gpd
 import plotly.express as px
 import json
 from pathlib import Path
+import streamlit.components.v1 as components
 
 # 1 ▸ page setup
 st.set_page_config("Taipei Rent Map", layout="wide", page_icon=":house:")
+
+# Insert Plausible analytics tracking script
+components.html(
+    """
+    <script defer data-domain="taipei-rent-app-886.streamlit.app" src="https://plausible.io/js/script.js"></script>
+    """,
+    height=0,
+)
 
 st.markdown(
     """
